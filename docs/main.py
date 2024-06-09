@@ -3,21 +3,19 @@ import random
 # Generate secret number
 def generate_secret_number():
     return random.randint(1, 100)
-
 # Function to check the guess
-def check_riddle(secret_number, guess):
-    if guess < secret_number:
-        return "Muy bajo"
-    elif guess > secret_number:
-        return "Muy alto"
+def check_guess(secret_number, input):
+    if secret_number > input:
+        return "El número secreto es mayor que la entrada.", False
+    elif secret_number < input:
+        return "El número secreto es menor que la entrada.", False
     else:
-        return "Correcto, adivinaste el number!"
-
+        return "Correcto, adivinó el número!", True
 # Function to player shift
-def player_shift(secret_number):
+def player_shift():
     while True:
         try:
-            entry = input("Introduce tu suposición (1-100) o escribe 'Salir' ")
+            entry = input("Introduce tu suposición (1-100) o escribe 'Salir': ")
             entry = entry.lower()
             
             if entry == "salir":
@@ -30,60 +28,81 @@ def player_shift(secret_number):
         except ValueError:
             print("Error: Debes introducir un número entero.")
 
-# Function for computer shift
-"""def computer_shift(secret_number):
-    return random.randint(1, 100)"""
+def get_max(a, b):
+    if a > b:
+        return a - 1
+    else: 
+        return b - 1
 
-def computer_shift(secret_number, min_number=1, max_number=100):
-
-    guess = (min_number + max_number) // 2  # Calcular la suposición media
-    print(f"La computadora adivina: {guess}")
-    result = check_riddle(secret_number, guess)
-    print(f"result: {result}")  # print the result
-    return guess
-
+def get_min(a, b):
+    if a < b:
+        return a + 1
+    else: 
+        return b + 1
 
 # Feature for main game
 def play():
-    secret_number = generate_secret_number()
-    print("Bienvenido al juego Adivina el Número!")
-
-    min_number = 1
-    max_number = 100
-    remaining_attempts = 10
-    player_assumptions = [] # list to store player guesses
-    while remaining_attempts > 0:
-        print(f"Te quedan {remaining_attempts} intentos.")
-
-        guess = player_shift(secret_number)
-        if guess is None:
-            print("Has salido del juego")
-            return guess
-        
-        player_assumptions.append(guess) # Add assumptions to the list
-        result = check_riddle(secret_number, guess)
-        print(result)
-        
-        computer_guess = computer_shift(secret_number, min_number=1, max_number=100)
-        result_ordenador = check_riddle(secret_number, computer_guess)
-        print(f"La computadora adivina: {computer_guess} ({result_ordenador})")
-
-        if result == "Correcto, adivinaste el number!":
-            print("**Supuestas de la jugadora:**")
-            for supocision in player_assumptions:
-                print(f" - {supocision}")
-            break # End the loop if the answer is no yes
-
-        remaining_attempts -= 1
-
-    else:
-        print(f"Lo siento! No pudiste adivinar el número en 10 intentos. El número secreto era {secret_number}.")
-    
     while True:
-        play_de_nuevo = input("¿Deseas play de nuevo? (si/no): ").lower()
-        if play_de_nuevo != "si":
-            break  # Exit the loop if the answer is not "yes"
-    
-
+        secret_number = generate_secret_number()
+        print("Bienvenido al juego Adivina el Número!")
+        print(f"Se adivina el: {secret_number}")
+        min_number = 1
+        max_number = 100
+        remaining_attempts = 10  # Initialize remaining attempts
+        is_game_over = False
+        player_assumptions = []  # List to store player guesses
+        computer_assumptions = []  # List to store computer guesses
+        computer_guess = random.randint(min_number, max_number)
+        computer_result = ""
+        while remaining_attempts > 0 and not is_game_over:
+            print("#########################################")
+            print(f"Te quedan {remaining_attempts} intentos.")
+            # Decrement attempts after player's turn
+            remaining_attempts -= 1
+            player_guess = player_shift()
+            if player_guess is None:
+                print("Has salido del juego")
+                return player_guess
+            # Add player guess to the list        
+            player_assumptions.append(player_guess)
+             # Add computer guess to the list   
+            computer_assumptions.append(computer_guess)                        
+            player_result, is_player_winner = check_guess(secret_number, player_guess)
+            print(f"El jugador adivina: {player_guess}. {player_result}")
+            computer_result, is_computer_winner = check_guess(secret_number, computer_guess)
+            print(f"La computadora adivina: {computer_guess}. {computer_result}")
+            if is_player_winner:
+                print("**Ganó el jugador:**")
+                print("**Supuestos del jugador:**")
+                for assumption in player_assumptions:
+                    print(f" - {assumption}")
+                is_game_over = True
+            if is_computer_winner:
+                print("**Ganó el computador:**")
+                print("**Supuestos del computador:**")
+                for assumption in computer_assumptions:
+                    print(f" - {assumption}")
+                is_game_over = True
+            if player_guess < secret_number and computer_guess < secret_number:
+                computer_guess = random.randint(get_max(player_guess,computer_guess), 100)
+            elif player_guess > secret_number and computer_guess > secret_number:
+                computer_guess = random.randint(1, get_min(player_guess,computer_guess))
+            elif (player_guess > secret_number and computer_guess < secret_number) or (player_guess < secret_number and computer_guess > secret_number):
+                computer_guess = random.randint(get_min(player_guess, computer_guess), get_max(player_guess, computer_guess))                      
+        else:
+            if remaining_attempts == 0 and not is_game_over:
+                print(f"Lo siento! No pudiste adivinar el número en 10 intentos. El número secreto era {secret_number}.")
+                play_again = input("¿Deseas jugar de nuevo? (si/no): ").lower()
+                remaining_attempts = 10
+                if play_again != "si":
+                    break
+            elif is_game_over:
+                print("El juego ha terminado")
+                play_again = input("¿Deseas jugar de nuevo? (si/no): ").lower()
+                if play_again == "si":
+                    remaining_attempts = 10
+                    is_game_over = False
+                else:
+                    break
 if __name__ == "__main__":
     play()
